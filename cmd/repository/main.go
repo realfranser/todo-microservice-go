@@ -10,7 +10,7 @@ import (
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 
-	"github.com/realfarnser/todo-microservice-go/internal"
+	"github.com/realfranser/todo-microservice-go/internal"
 	"github.com/realfranser/todo-microservice-go/internal/postgresql"
 	"github.com/realfranser/todo-microservice-go/internal/service"
 )
