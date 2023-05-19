@@ -14,6 +14,14 @@ readonly DB_MIGRATIONS_PATH="db/migrations/"
 readonly DB_CONTAINER_NAME="todo_postgres_db"
 readonly DB_MIGRATION_MAX_TRIES=10
 
+## Vault
+readonly VAULT_CONTAINER_NAME="todo_vault"
+readonly VAULT_PORT=8300
+readonly VAULT_CAP_ADD="IPC_LOCK"
+readonly VAULT_DEV_ROOT_TOKEN_ID="myroot"
+readonly VAULT_IMAGE="vault:1.6.2"
+readonly VAULT_LISTEN_HOST="0.0.0.0"
+
 function launch_postgres_container() {
     if [ $( docker ps -a | grep "\<$DB_CONTAINER_NAME\>" | wc -l ) -gt 0 ]; then
         docker start $DB_CONTAINER_NAME
@@ -37,8 +45,23 @@ function launch_memcache_container() {
         docker run \
           -d \
           --name $MEMCACHE_CONTAINER_NAME \
-          -p $MEMCACHE_PORT:$MEMCACHE_PORT\
+          -p $MEMCACHE_PORT:$MEMCACHE_PORT \
           $MEMCACHE_IMAGE
+    fi
+}
+
+function launch_vault_container() {
+    if [ $( docker ps -a | grep "\<$VAULT_CONTAINER_NAME\>" | wc -l ) -gt 0 ]; then
+        docker start $VAULT_CONTAINER_NAME
+    else
+        docker run \
+          -d \
+          --cap-add=$VAULT_CAP_ADD \
+          --name $VAULT_CONTAINER_NAME \
+          -e VAULT_DEV_ROOT_TOKEN_ID=$VAULT_DEV_ROOT_TOKEN_ID \
+          -e VAULT_DEV_LISTEN_ADDRESS=$VAULT_LISTEN_HOST:$VAULT_PORT \
+          -p $VAULT_PORT:$VAULT_PORT \
+          $VAULT_IMAGE
     fi
 }
 
@@ -72,4 +95,8 @@ echo -e "\n"
 
 echo "Creating database migrations..."
 database_migrations
+echo -e "\n"
+
+echo "Launching vault container..."
+launch_vault_container
 echo -e "\n"
