@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -10,12 +9,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
 	_ "github.com/jackc/pgx/v4/stdlib"
 
-	"github.com/realfranser/todo-microservice-go/internal"
 	"github.com/realfranser/todo-microservice-go/internal/envvar"
 	"github.com/realfranser/todo-microservice-go/internal/envvar/vault"
 	"github.com/realfranser/todo-microservice-go/internal/postgresql"
+	"github.com/realfranser/todo-microservice-go/internal/rest"
 	"github.com/realfranser/todo-microservice-go/internal/service"
 )
 
@@ -40,29 +40,22 @@ func main() {
 
 	repo := postgresql.NewTask(db) // Task Repository
 	svc := service.NewTask(repo)   // Task Application Service
-	task, err := svc.Create(context.Background(), "new task", internal.PriorityLow, internal.Dates{})
-
-	fmt.Printf("NEW task %#v, err %s\n", task, err)
 
 	//-
 
-	if err := svc.Update(context.Background(),
-		task.ID,
-		"changed task",
-		internal.PriorityHigh,
-		internal.Dates{
-			Due: time.Now().Add(2 * time.Hour),
-		},
-		false); err != nil {
-		log.Fatalln("couldn't update task", err)
-	}
+	app := fiber.New(fiber.Config{
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+		IdleTimeout:  1 * time.Second,
+	})
 
-	updatedTask, err := svc.Task(context.Background(), task.ID)
-	if err != nil {
-		log.Fatalln("couldn't find task", err)
-	}
+	rest.NewTaskHandler(svc).Register(app)
 
-	fmt.Printf("UPDATED task %#v, err %s\n", updatedTask, err)
+	address := "0.0.0.0:9234"
+
+	log.Println("Starting server", address)
+
+	log.Fatal(app.Listen(address))
 }
 
 func newDB(conf *envvar.Configuration) *sql.DB {

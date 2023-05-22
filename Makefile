@@ -21,7 +21,7 @@ setup:
 	@bash $(SETUP_SCRIPT)
 
 run:
-	go run ./cmd/repository/main.go
+	go run ./cmd/repository/main.go -env env.example
 
 migrate-tables-up:
 	migrate -path $(DB_MIGRATIONS_PATH) -database "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(POSTGRES_PORT)/dbname?sslmode=disable" up
